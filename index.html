@@ -75,7 +75,8 @@
   }
   .envelope.open .inside { opacity: 1; visibility: visible; }
 
-  .question { font-size: 1.25rem; color: #d63384; margin-bottom: 24px; font-weight: 700; letter-spacing: 0.5px; }
+  .letter { width: 100%; display: flex; flex-direction: column; align-items: center; }
+  .question { font-size: 1.25rem; color: #d63384; margin-bottom: 24px; font-weight: 700; letter-spacing: 0.5px; line-height: 1.3; text-align: center; text-wrap: balance; white-space: nowrap; }
   .buttons { display: flex; gap: 16px; }
   .btn {
     padding: 12px 26px;
@@ -96,11 +97,13 @@
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
     display: flex; flex-direction: column; justify-content: center; align-items: center;
     z-index: 100;
-    background: rgba(255,255,255,0.85);
+    background: #000;
+    overflow: hidden;
   }
   .hidden { display: none !important; }
   canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
-  .result-text { position: relative; z-index: 2; font-size: 1.6rem; color: #d63384; margin-bottom: 24px; text-align: center; text-shadow: 2px 2px 6px rgba(0,0,0,0.1); line-height: 1.4; }
+  .bg-img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; }
+  .result-text { position: relative; z-index: 2; font-size: 1.6rem; color: #d63384; margin-bottom: 24px; text-align: center; line-height: 1.4; text-wrap: balance; max-width: 90%; background: rgba(255,255,255,0.8); padding: 14px 24px; border-radius: 20px; box-shadow: 0 6px 18px rgba(0,0,0,0.15); }
   .close-btn { position: relative; z-index: 2; padding: 12px 32px; background: #fff; border: none; border-radius: 30px; cursor: pointer; font-weight: 700; color: #d63384; box-shadow: 0 6px 18px rgba(0,0,0,0.15); transition: transform 0.15s; }
   .close-btn:active { transform: scale(0.95); }
 
@@ -108,7 +111,7 @@
     .envelope { width: 280px; height: 190px; }
     .envelope .front::before { border-left: 140px solid transparent; border-right: 140px solid transparent; border-bottom: 95px solid #ff6b81; }
     .envelope .inside { top: 20px; left: 20px; width: 240px; height: 150px; padding: 20px; }
-    .question { font-size: 1.1rem; }
+    .question { font-size: 1.05rem; letter-spacing: 0; }
     .result-text { font-size: 1.3rem; padding: 0 20px; }
   }
 </style>
@@ -130,12 +133,14 @@
   </div>
 
   <div id="fireworksOverlay" class="overlay hidden">
+    <img class="bg-img" src="cat_happy.jpg" alt="">
     <canvas id="fireworksCanvas"></canvas>
     <h1 class="result-text">вы сделали правильное решение миледи❤️❤️❤️❤️</h1>
     <button id="closeFireworks" class="close-btn">Закрыть</button>
   </div>
 
   <div id="rainOverlay" class="overlay hidden">
+    <img class="bg-img" src="cat_sad.jpg" alt="">
     <canvas id="rainCanvas"></canvas>
     <h1 class="result-text">я обиделься, пошел грустить🥲🥲🥲🥲🥲</h1>
     <button id="closeRain" class="close-btn">Закрыть</button>
@@ -225,8 +230,7 @@
   }
 
   function animateFireworks() {
-    fwCtx.fillStyle = 'rgba(0,0,0,0.2)';
-    fwCtx.fillRect(0, 0, fwCanvas.width, fwCanvas.height);
+    fwCtx.clearRect(0, 0, fwCanvas.width, fwCanvas.height);
     for (let i = particles.length - 1; i >= 0; i--) {
       const p = particles[i];
       p.update();
