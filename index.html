@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Приглашение для тебя ❤️</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: linear-gradient(135deg, #ffe6f2, #fff0f5);
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+  }
+  .scene { position: relative; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; }
+
+  /* Конверт */
+  .envelope {
+    width: 320px;
+    height: 220px;
+    position: relative;
+    cursor: pointer;
+  }
+  .envelope .front {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: #ff9aa2;
+    border-radius: 12px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+    z-index: 3;
+    transition: transform 0.6s ease, z-index 0.6s ease;
+  }
+  .envelope .front::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 50%; transform: translateX(-50%);
+    width: 0; height: 0;
+    border-left: 160px solid transparent;
+    border-right: 160px solid transparent;
+    border-bottom: 110px solid #ff6b81;
+    border-radius: 12px 12px 0 0;
+  }
+  .envelope .flap {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: #ff9aa2;
+    border-radius: 12px;
+    z-index: 2;
+    transform-origin: top;
+    transition: transform 0.6s ease;
+    clip-path: polygon(0 0, 100% 0, 50% 100%, 0 0);
+  }
+  .envelope.open .flap { transform: rotateX(180deg); z-index: 0; }
+  .envelope.open .front { transform: rotateX(180deg); transform-origin: bottom; z-index: 0; }
+
+  .envelope .inside {
+    position: absolute;
+    top: 25px; left: 25px; width: 270px; height: 170px;
+    background: #fff;
+    border-radius: 10px;
+    padding: 25px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    z-index: 1;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.5s ease, visibility 0.5s ease;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+  }
+  .envelope.open .inside { opacity: 1; visibility: visible; }
+
+  .question { font-size: 1.25rem; color: #d63384; margin-bottom: 24px; font-weight: 700; letter-spacing: 0.5px; }
+  .buttons { display: flex; gap: 16px; }
+  .btn {
+    padding: 12px 26px;
+    border: none;
+    border-radius: 30px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.2s;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+  .btn.yes { background: #28a745; color: #fff; }
+  .btn.no { background: #dc3545; color: #fff; }
+  .btn:active { transform: scale(0.92); }
+
+  /* Оверлеи с результатами */
+  .overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    z-index: 100;
+    background: rgba(255,255,255,0.85);
+  }
+  .hidden { display: none !important; }
+  canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
+  .result-text { position: relative; z-index: 2; font-size: 1.6rem; color: #d63384; margin-bottom: 24px; text-align: center; text-shadow: 2px 2px 6px rgba(0,0,0,0.1); line-height: 1.4; }
+  .close-btn { position: relative; z-index: 2; padding: 12px 32px; background: #fff; border: none; border-radius: 30px; cursor: pointer; font-weight: 700; color: #d63384; box-shadow: 0 6px 18px rgba(0,0,0,0.15); transition: transform 0.15s; }
+  .close-btn:active { transform: scale(0.95); }
+
+  @media (max-width: 480px) {
+    .envelope { width: 280px; height: 190px; }
+    .envelope .front::before { border-left: 140px solid transparent; border-right: 140px solid transparent; border-bottom: 95px solid #ff6b81; }
+    .envelope .inside { top: 20px; left: 20px; width: 240px; height: 150px; padding: 20px; }
+    .question { font-size: 1.1rem; }
+    .result-text { font-size: 1.3rem; padding: 0 20px; }
+  }
+</style>
+</head>
+<body>
+<div class="scene">
+  <div class="envelope" id="envelope" title="Нажми, чтобы открыть">
+    <div class="front"></div>
+    <div class="flap"></div>
+    <div class="inside">
+      <div class="letter">
+        <h2 class="question">Хочешь созвониться?</h2>
+        <div class="buttons">
+          <button id="yesBtn" class="btn yes">Да</button>
+          <button id="noBtn" class="btn no">Нет</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="fireworksOverlay" class="overlay hidden">
+    <canvas id="fireworksCanvas"></canvas>
+    <h1 class="result-text">вы сделали правильное решение миледи❤️❤️❤️❤️</h1>
+    <button id="closeFireworks" class="close-btn">Закрыть</button>
+  </div>
+
+  <div id="rainOverlay" class="overlay hidden">
+    <canvas id="rainCanvas"></canvas>
+    <h1 class="result-text">я обиделься, пошел грустить🥲🥲🥲🥲🥲</h1>
+    <button id="closeRain" class="close-btn">Закрыть</button>
+  </div>
+</div>
+
+<script>
+  const envelope = document.getElementById('envelope');
+  const yesBtn = document.getElementById('yesBtn');
+  const noBtn = document.getElementById('noBtn');
+  const fireworksOverlay = document.getElementById('fireworksOverlay');
+  const rainOverlay = document.getElementById('rainOverlay');
+
+  envelope.addEventListener('click', () => {
+    envelope.classList.toggle('open');
+  });
+
+  yesBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    envelope.classList.remove('open');
+    fireworksOverlay.classList.remove('hidden');
+    startFireworks();
+  });
+
+  noBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    envelope.classList.remove('open');
+    rainOverlay.classList.remove('hidden');
+    startRain();
+  });
+
+  document.getElementById('closeFireworks').addEventListener('click', () => {
+    fireworksOverlay.classList.add('hidden');
+    stopFireworks();
+  });
+  document.getElementById('closeRain').addEventListener('click', () => {
+    rainOverlay.classList.add('hidden');
+    stopRain();
+  });
+
+  /* ---------- Фейерверки ---------- */
+  const fwCanvas = document.getElementById('fireworksCanvas');
+  const fwCtx = fwCanvas.getContext('2d');
+  let fwAnimationId;
+  let particles = [];
+
+  function resizeCanvas(canvas) {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resizeCanvas(fwCanvas);
+  window.addEventListener('resize', () => resizeCanvas(fwCanvas));
+
+  class Particle {
+    constructor(x, y, color) {
+      this.x = x;
+      this.y = y;
+      this.color = color;
+      const angle = Math.random() * Math.PI * 2;
+      const speed = Math.random() * 5 + 2;
+      this.vx = Math.cos(angle) * speed;
+      this.vy = Math.sin(angle) * speed;
+      this.alpha = 1;
+      this.decay = Math.random() * 0.02 + 0.015;
+    }
+    update() {
+      this.x += this.vx;
+      this.y += this.vy;
+      this.vy += 0.05;
+      this.alpha -= this.decay;
+    }
+    draw(ctx) {
+      ctx.globalAlpha = this.alpha;
+      ctx.fillStyle = this.color;
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, 3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  function explode(x, y) {
+    const colors = ['#ff0066', '#ff66cc', '#ffcc00', '#ffffff', '#ff9933'];
+    for (let i = 0; i < 60; i++) {
+      particles.push(new Particle(x, y, colors[Math.floor(Math.random() * colors.length)]));
+    }
+  }
+
+  function animateFireworks() {
+    fwCtx.fillStyle = 'rgba(0,0,0,0.2)';
+    fwCtx.fillRect(0, 0, fwCanvas.width, fwCanvas.height);
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
+      p.update();
+      p.draw(fwCtx);
+      if (p.alpha <= 0) particles.splice(i, 1);
+    }
+    if (Math.random() < 0.15) {
+      explode(Math.random() * fwCanvas.width, Math.random() * fwCanvas.height * 0.5);
+    }
+    fwAnimationId = requestAnimationFrame(animateFireworks);
+  }
+
+  function startFireworks() {
+    particles = [];
+    animateFireworks();
+  }
+  function stopFireworks() {
+    cancelAnimationFrame(fwAnimationId);
+    particles = [];
+    fwCtx.clearRect(0, 0, fwCanvas.width, fwCanvas.height);
+  }
+
+  /* ---------- Дождь ---------- */
+  const rainCanvas = document.getElementById('rainCanvas');
+  const rainCtx = rainCanvas.getContext('2d');
+  let rainAnimationId;
+  let drops = [];
+
+  resizeCanvas(rainCanvas);
+  window.addEventListener('resize', () => resizeCanvas(rainCanvas));
+
+  class Drop {
+    constructor() {
+      this.x = Math.random() * rainCanvas.width;
+      this.y = Math.random() * rainCanvas.height;
+      this.speed = Math.random() * 5 + 5;
+      this.length = Math.random() * 20 + 10;
+    }
+    update() {
+      this.y += this.speed;
+      if (this.y > rainCanvas.height) {
+        this.y = -20;
+        this.x = Math.random() * rainCanvas.width;
+      }
+    }
+    draw(ctx) {
+      ctx.strokeStyle = '#6a9edb';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(this.x, this.y);
+      ctx.lineTo(this.x, this.y + this.length);
+      ctx.stroke();
+    }
+  }
+
+  function initRain() {
+    drops = [];
+    for (let i = 0; i < 150; i++) drops.push(new Drop());
+  }
+
+  function animateRain() {
+    rainCtx.clearRect(0, 0, rainCanvas.width, rainCanvas.height);
+    drops.forEach(d => { d.update(); d.draw(rainCtx); });
+    rainAnimationId = requestAnimationFrame(animateRain);
+  }
+
+  function startRain() {
+    initRain();
+    animateRain();
+  }
+  function stopRain() {
+    cancelAnimationFrame(rainAnimationId);
+    rainCtx.clearRect(0, 0, rainCanvas.width, rainCanvas.height);
+  }
+</script>
+</body>
+</html>
